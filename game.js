@@ -41,8 +41,9 @@ class Tetris {
         this.currentPiece = null;
         this.nextPiece = null;
         this.dropCounter = 0;
-        this.speedMultiplier = 1;
-        this.baseDropInterval = 1000;
+        this.speedLevel = 5; // 1-10，預設5
+        this.lastGameLoopTime = Date.now();
+        this.animationFrameId = null;
         
         this.setupEventListeners();
         this.generateNextPiece();
@@ -63,23 +64,43 @@ class Tetris {
     
     updateSpeed(e) {
         // 速度值 1-10，其中 1 是最慢，10 是最快
-        this.speedMultiplier = parseInt(e.target.value);
-        document.getElementById('speedValue').textContent = this.speedMultiplier;
+        this.speedLevel = parseInt(e.target.value);
+        document.getElementById('speedValue').textContent = this.speedLevel;
+        console.log('Speed set to:', this.speedLevel, 'Drop interval:', this.getDropInterval());
     }
     
     getDropInterval() {
-        // 基礎下落間隔根據速度計算
+        // 速度計算：
         // 速度 1: 2000ms (最慢)
+        // 速度 2: 1750ms
+        // 速度 3: 1500ms
+        // 速度 4: 1250ms
         // 速度 5: 1000ms (中等)
-        // 速度 10: 300ms (最快)
-        const interval = 2500 - (this.speedMultiplier * 220);
-        return Math.max(200, interval);
+        // 速度 6: 800ms
+        // 速度 7: 600ms
+        // 速度 8: 400ms
+        // 速度 9: 250ms
+        // 速度 10: 100ms (最快)
+        const speedMap = {
+            1: 2000,
+            2: 1750,
+            3: 1500,
+            4: 1250,
+            5: 1000,
+            6: 800,
+            7: 600,
+            8: 400,
+            9: 250,
+            10: 100
+        };
+        return speedMap[this.speedLevel] || 1000;
     }
     
     start() {
         if (!this.gameRunning) {
             this.gameRunning = true;
             this.gamePaused = false;
+            this.lastGameLoopTime = Date.now();
             document.getElementById('startBtn').disabled = true;
             document.getElementById('pauseBtn').disabled = false;
             document.getElementById('resumeBtn').disabled = true;
@@ -96,12 +117,17 @@ class Tetris {
     
     resume() {
         this.gamePaused = false;
+        this.lastGameLoopTime = Date.now(); // 重置時間以避免時間跳躍
         document.getElementById('pauseBtn').disabled = false;
         document.getElementById('resumeBtn').disabled = true;
         this.gameLoop();
     }
     
     reset() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+        
         this.board = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
         this.score = 0;
         this.level = 1;
@@ -109,7 +135,7 @@ class Tetris {
         this.gameRunning = false;
         this.gamePaused = false;
         this.dropCounter = 0;
-        this.speedMultiplier = 5;
+        this.speedLevel = 5;
         
         document.getElementById('startBtn').disabled = false;
         document.getElementById('pauseBtn').disabled = true;
@@ -289,30 +315,36 @@ class Tetris {
     gameOver() {
         this.gameRunning = false;
         this.gamePaused = false;
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
         document.getElementById('startBtn').disabled = false;
         document.getElementById('pauseBtn').disabled = true;
         document.getElementById('resumeBtn').disabled = true;
         alert(`遊戲結束！\n最終分數: ${this.score}\n等級: ${this.level}`);
     }
     
-    gameLoop(lastTime = 0) {
+    gameLoop() {
         if (!this.gameRunning) return;
         
         const now = Date.now();
-        const delta = now - lastTime;
+        const delta = now - this.lastGameLoopTime;
         
-        this.dropCounter += delta;
-        
-        const currentDropInterval = this.getDropInterval();
-        
-        if (this.dropCounter > currentDropInterval && !this.gamePaused) {
-            this.dropCounter = 0;
-            this.dropPiece();
+        if (!this.gamePaused) {
+            this.dropCounter += delta;
+            
+            const currentDropInterval = this.getDropInterval();
+            
+            if (this.dropCounter >= currentDropInterval) {
+                this.dropCounter = 0;
+                this.dropPiece();
+            }
         }
         
         this.draw();
+        this.lastGameLoopTime = now;
         
-        requestAnimationFrame((time) => this.gameLoop(time));
+        this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
     }
     
     draw() {
