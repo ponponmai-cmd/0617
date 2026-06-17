@@ -41,7 +41,8 @@ class Tetris {
         this.currentPiece = null;
         this.nextPiece = null;
         this.dropCounter = 0;
-        this.dropInterval = 1000;
+        this.speedMultiplier = 1;
+        this.baseDropInterval = 1000;
         
         this.setupEventListeners();
         this.generateNextPiece();
@@ -54,7 +55,25 @@ class Tetris {
         document.getElementById('resumeBtn').addEventListener('click', () => this.resume());
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
         
+        // 速度滑塊控制
+        document.getElementById('speedSlider').addEventListener('input', (e) => this.updateSpeed(e));
+        
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+    }
+    
+    updateSpeed(e) {
+        // 速度值 1-10，其中 1 是最慢，10 是最快
+        this.speedMultiplier = parseInt(e.target.value);
+        document.getElementById('speedValue').textContent = this.speedMultiplier;
+    }
+    
+    getDropInterval() {
+        // 基礎下落間隔根據速度計算
+        // 速度 1: 2000ms (最慢)
+        // 速度 5: 1000ms (中等)
+        // 速度 10: 300ms (最快)
+        const interval = 2500 - (this.speedMultiplier * 220);
+        return Math.max(200, interval);
     }
     
     start() {
@@ -64,6 +83,7 @@ class Tetris {
             document.getElementById('startBtn').disabled = true;
             document.getElementById('pauseBtn').disabled = false;
             document.getElementById('resumeBtn').disabled = true;
+            document.getElementById('speedSlider').disabled = false;
             this.gameLoop();
         }
     }
@@ -89,12 +109,14 @@ class Tetris {
         this.gameRunning = false;
         this.gamePaused = false;
         this.dropCounter = 0;
-        this.currentPiece = null;
-        this.nextPiece = null;
+        this.speedMultiplier = 5;
         
         document.getElementById('startBtn').disabled = false;
         document.getElementById('pauseBtn').disabled = true;
         document.getElementById('resumeBtn').disabled = true;
+        document.getElementById('speedSlider').disabled = false;
+        document.getElementById('speedSlider').value = 5;
+        document.getElementById('speedValue').textContent = '5';
         document.getElementById('score').textContent = '0';
         document.getElementById('level').textContent = '1';
         document.getElementById('lines').textContent = '0';
@@ -258,7 +280,6 @@ class Tetris {
         this.score += points[linesCleared] * this.level;
         this.lines += linesCleared;
         this.level = Math.floor(this.lines / 10) + 1;
-        this.dropInterval = Math.max(100, 1000 - (this.level - 1) * 50);
         
         document.getElementById('score').textContent = this.score;
         document.getElementById('level').textContent = this.level;
@@ -282,7 +303,9 @@ class Tetris {
         
         this.dropCounter += delta;
         
-        if (this.dropCounter > this.dropInterval && !this.gamePaused) {
+        const currentDropInterval = this.getDropInterval();
+        
+        if (this.dropCounter > currentDropInterval && !this.gamePaused) {
             this.dropCounter = 0;
             this.dropPiece();
         }
