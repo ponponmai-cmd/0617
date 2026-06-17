@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俄羅斯方塊</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>俄羅斯方塊</h1>
+        <div class="game-wrapper">
+            <div class="game-area">
+                <canvas id="gameCanvas" width="200" height="400"></canvas>
+            </div>
+            <div class="side-panel">
+                <div class="info-box">
+                    <h3>下一個方塊</h3>
+                    <canvas id="nextCanvas" width="80" height="80"></canvas>
+                </div>
+                <div class="info-box">
+                    <h3>分數: <span id="score">0</span></h3>
+                </div>
+                <div class="info-box">
+                    <h3>等級: <span id="level">1</span></h3>
+                </div>
+                <div class="info-box">
+                    <h3>清除行數: <span id="lines">0</span></h3>
+                </div>
+                <button id="startBtn" class="btn btn-primary">開始遊戲</button>
+                <button id="pauseBtn" class="btn btn-secondary" disabled>暫停</button>
+                <button id="resumeBtn" class="btn btn-secondary" disabled>繼續</button>
+                <button id="resetBtn" class="btn btn-danger">重置</button>
+                <div class="controls">
+                    <p><strong>控制方式：</strong></p>
+                    <p>← → : 左右移動</p>
+                    <p>↑ : 旋轉</p>
+                    <p>↓ : 加速下落</p>
+                    <p>空格 : 快速落下</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
